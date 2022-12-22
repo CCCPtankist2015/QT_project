@@ -703,10 +703,8 @@ void MainWindow::saveFile()
         cell.y = item->y();
         cell.type = item->type();
         cell.acessibleName = item->data(ObjectName).toString().toLocal8Bit().data();
-#ifdef DEBUG
         DiagramItem* advancedItem = (DiagramItem*)item;
         cell.acessibleName = advancedItem->typeToString();
-#endif//DEBUG
 
         data_array.push_back(cell);
     }
