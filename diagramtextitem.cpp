@@ -40,3 +40,10 @@ void DiagramTextItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
     QGraphicsTextItem::mouseDoubleClickEvent(event);
 }
 //! [5]
+
+//! [6]
+QString DiagramTextItem::getText()
+{
+    return this->toPlainText();
+}
+//! [6]

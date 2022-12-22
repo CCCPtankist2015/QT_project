@@ -291,8 +291,16 @@ void MainWindow::itemSelected(QGraphicsItem *item)
 void MainWindow::about()
 {
     QMessageBox::about(this, tr("About Diagram Scene"),
-                       tr("Использование <b>Диаграммы классов </b> для демонастрции  "
-                          "возможности графического фреймворка."));
+                       tr("Курсовая работа Поляков В.С. АИ-21-2"));
+#ifdef DEBUG
+    QMessageBox::about(this,
+                       tr("ID of Elements!"),
+                       tr((std::string("1. Text item type: ")
+                         + std::to_string(DiagramTextItem::Type)
+                         + std::string("\n2. Graphic item type: ")
+                         + std::to_string(DiagramItem::Type)
+                           ).c_str()));
+#endif
 }
 //! [20]
 
@@ -676,8 +684,17 @@ void MainWindow::saveFile()
     // Getting data from scene
     static const int ObjectName = 0;
     std::vector<DocumentNodeData> data_array;
+    std::vector<DocumentTextData> text_array;
     for(auto item: this->scene->items()) { // Returns QGraphicsItem, maybe convert to basic instead?
-        if (item->x() == 0) {
+        if (item->x() == 0)
+            continue;
+        if (item->type() == DiagramTextItem::Type) {
+            DocumentTextData text_cell;
+            DiagramTextItem* item_recast = (DiagramTextItem*)item; // Recast for accepting text-based nodes fields
+            text_cell.x = item_recast->x();
+            text_cell.y = item_recast->y();
+            text_cell.text = (char*)std::string(item_recast->document()->toRawText().toLocal8Bit().data()).c_str();
+            text_array.push_back(text_cell);
             continue;
         }
         DocumentNodeData cell;
@@ -694,6 +711,7 @@ void MainWindow::saveFile()
     pugi::xml_document doc;
 
     pugi::xml_node diagram_node = doc.append_child("diagram");
+    //[1] Nodes
     for(auto item : data_array) {
         if (item.x == 0) // Arrow handler, skip
             continue;
@@ -707,6 +725,24 @@ void MainWindow::saveFile()
                             id_node.set_value(item_stringified.at(2).c_str());
     }
 
+    //[2] Text
+    for(DocumentTextData item : text_array) {
+        pugi::xml_node item_node = diagram_node.append_child("diagram-text");
+        pugi::xml_attribute x_node = item_node.append_attribute("x");
+                            x_node.set_value(item.x);
+        pugi::xml_attribute y_node = item_node.append_attribute("y");
+                            y_node.set_value(item.y);
+        pugi::xml_attribute t_node = item_node.append_attribute("text");
+                            t_node.set_value(std::string(item.text).c_str());
+#ifdef DEBUG
+            QMessageBox debugBox;
+            debugBox.setText((
+                std::string("String contained: ")
+              + std::string(item.text)
+            ).c_str());
+            debugBox.exec();
+#endif
+    }
     doc.save_file(file_name.toLocal8Bit().data());
 }
 //! [33]
@@ -718,7 +754,6 @@ void MainWindow::loadFile()
     QString file_name = QFileDialog::getOpenFileName(this,
         tr("Open Scema"), QDir::homePath(), tr("XML file (*.xml *.uml*)"));
 
-#ifdef DEBUG
     if (file_name.isEmpty()) {
         QMessageBox debugBox;
         debugBox.setText("File is not selected!");
@@ -726,7 +761,6 @@ void MainWindow::loadFile()
         return;
     }
     QMessageBox debugBox;
-#endif
 
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file(file_name.toLocal8Bit().data());
@@ -750,6 +784,7 @@ void MainWindow::loadFile()
     // Loading data from nodes
     //! [34.2]
     for (DocumentNodeData data : uml_data) {
+
 #ifdef DEBUG
         QMessageBox debugBox;
         debugBox.setText((
@@ -760,7 +795,6 @@ void MainWindow::loadFile()
         ).c_str());
         debugBox.exec();
 #endif
-
         this->scene->setItemType(DiagramItem::DiagramType(
             DiagramItem::stringToType(data.acessibleName)
         ));
@@ -774,15 +808,46 @@ void MainWindow::loadFile()
         );
         item->setBrush(this->scene->getCurrentColor());
         this->scene->addItem(item);
-        //emit this->scene->itemInserted(item);
-        /*
-            item = new DiagramItem(myItemType, myItemMenu);
-            item->setBrush(myItemColor);
-            addItem(item);
-            item->setPos(mouseEvent->scenePos());
-            emit itemInserted(item);
-         */
     }
     //! [34.2]
+
+    //! [34.3]
+    std::vector<DocumentTextData> text_data;
+    for (pugi::xpath_node child = doc.select_node("diagram").node().select_node("diagram-text"); child;)
+    {
+        // Get next child node before possibly deleting current child
+        pugi::xml_node next = child.node();
+
+        DocumentTextData node;
+        node.x = next.attribute("x").as_float();
+        node.y = next.attribute("y").as_float();
+        node.text = (char*)(next.attribute("text").as_string());
+        text_data.push_back(node);
+
+        child = next.next_sibling(); i++;
+    }
+    //! [34.3]
+
+    //! [34.4]
+    for (DocumentTextData data : text_data)
+    {
+#ifdef DEBUG
+        QMessageBox debugBox;
+        debugBox.setText((
+            std::string("Provided text content: ")
+          + std::string(data.text)
+        ).c_str());
+        debugBox.exec();
+#endif
+        QTextDocument* doc = new QTextDocument();
+        doc->setPlainText(QString(data.text));
+        DiagramTextItem* textItem = new DiagramTextItem();
+        textItem->setTextInteractionFlags(Qt::TextEditorInteraction);
+        textItem->setZValue(1000.0);
+        textItem->setPos(data.x, data.y);
+        textItem->setDocument(doc);
+        this->scene->addItem(textItem);
+    }
+    //! [34.4]
 }
 //! [34]

@@ -21,6 +21,7 @@ public:
     DiagramTextItem(QGraphicsItem *parent = nullptr);
 
     int type() const override { return Type; }
+    QString getText();
 
 signals:
     void lostFocus(DiagramTextItem *item);

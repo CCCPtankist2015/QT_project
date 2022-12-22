@@ -9,6 +9,12 @@ struct DocumentNodeData {
     char* acessibleName;
 };
 
+struct DocumentTextData {
+    float x;
+    float y;
+    char* text;
+};
+
 std::vector<std::string>
 document_node_to_string(DocumentNodeData&);
 
