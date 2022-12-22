@@ -6,8 +6,20 @@
 #include "diagramscene.h"
 #include "diagramtextitem.h"
 #include "mainwindow.h"
+#include "pugixml.hpp"
+#include "datatypes.h"
 
+#include <QString>
 #include <QtWidgets>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QMessageBox>
+
+#include <cstdlib>
+#include <sstream>
+#include <iostream>
+#include <vector>
+
 
 const int InsertTextButton = 10;
 
@@ -280,7 +292,7 @@ void MainWindow::about()
                           "возможности графического фреймворка."));
 }
 
-void MainWindow::save()
+/*void MainWindow::save()
 {
      //scene->addRect(QRectF(0, 0, 100, 200), QPen(Qt::black), QBrush(Qt::green));
 
@@ -296,7 +308,7 @@ void MainWindow::save()
      scene->render(&p);
      p.end();
      img.save("XXX.png");
-}
+}*/
 //! [20]
 
 //! [21]
@@ -410,9 +422,11 @@ void MainWindow::createActions()
     aboutAction->setShortcut(tr("F1"));
     connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
 
-    saveAction = new QAction(tr("A&bout"), this);
-    saveAction->setShortcut(tr("F5"));
-    connect(saveAction, &QAction::triggered, this, &MainWindow::save);
+    saveAction = new QAction(tr("S&ave"), this);
+    connect(saveAction, &QAction::triggered, this, &MainWindow::saveFile);
+
+    loadAction = new QAction(tr("L&oad"), this);
+    connect(loadAction, &QAction::triggered, this, &MainWindow::loadFile);
 }
 
 //! [24]
@@ -420,6 +434,8 @@ void MainWindow::createMenus()
 {
     fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(exitAction);
+    fileMenu->addAction(saveAction);
+    fileMenu->addAction(loadAction);
 
     itemMenu = menuBar()->addMenu(tr("&Item"));
     itemMenu->addAction(deleteAction);
@@ -429,9 +445,6 @@ void MainWindow::createMenus()
 
     aboutMenu = menuBar()->addMenu(tr("&Help"));
     aboutMenu->addAction(aboutAction);
-
-    fileMenu = menuBar()->addMenu(tr("&Save"));
-    fileMenu->addAction(saveAction);
 }
 //! [24]
 
@@ -654,3 +667,95 @@ QIcon MainWindow::createColorIcon(QColor color)
     return QIcon(pixmap);
 }
 //! [32]
+void MainWindow::saveFile()
+{
+    if (this->scene->items().isEmpty()) {
+        QMessageBox debugBox;
+        debugBox.setText("Diagram is empty!");
+        debugBox.exec();
+        return;
+    }
+
+    bool ok;
+    QString file_name = QInputDialog::getText(this, tr("Editor"),
+                                              "File name: ", QLineEdit::Normal,
+                                              QDir::home().dirName(), &ok);
+
+    if (file_name.isEmpty()) {
+        QMessageBox debugBox;
+        debugBox.setText("File name is empty!");
+        debugBox.exec();
+        return;
+    }
+
+    // Getting data from scene
+    std::vector<DocumentNodeData> data_array;
+    for(auto item: this->scene->items()) {
+        DocumentNodeData cell;
+        cell.x = item->x();
+        cell.y = item->y();
+        cell.type = item->type();
+        data_array.push_back(cell);
+    }
+
+    // XML Parser right here
+    pugi::xml_document doc;
+
+    pugi::xml_node diagram_node = doc.append_child("diagram");
+    for(auto item : data_array) {
+        pugi::xml_node item_node = diagram_node.append_child("diagram-item");
+        std::vector<std::string> item_stringified = document_node_to_string(item);
+        pugi::xml_attribute x_node = item_node.append_attribute("x");
+                            x_node.set_value(item_stringified.at(0).c_str());
+        pugi::xml_attribute y_node = item_node.append_attribute("y");
+                            y_node.set_value(item_stringified.at(1).c_str());
+        pugi::xml_attribute type_node = item_node.append_attribute("type");
+                            type_node.set_value(item_stringified.at(2).c_str());
+    }
+
+    doc.save_file(file_name.toLocal8Bit().data());
+}
+//! [33]
+
+//! [34]
+void MainWindow::loadFile()
+{
+    int i = 0;
+    QString file_name = QFileDialog::getOpenFileName(this,
+        tr("Open Scema"), QDir::homePath(), tr("XML file (*.xml *.uml*)"));
+
+    if (file_name.isEmpty()) {
+        QMessageBox debugBox;
+        debugBox.setText("File is not selected!");
+        debugBox.exec();
+        return;
+    }
+
+    QMessageBox debugBox;
+    pugi::xml_document doc;
+    pugi::xml_parse_result result = doc.load_file(file_name.toLocal8Bit().data());
+    for (pugi::xpath_node child = doc.select_node("diagram").node().select_node("diagram-item"); child;)
+    {
+        // Get next child node before possibly deleting current child
+        pugi::xml_node next = child.node();
+
+        debugBox.setText("Step 1."); debugBox.exec();
+        DiagramItem* item = new DiagramItem(
+            (DiagramItem::DiagramType)next.attribute("type").as_int(),
+            this->scene->getMyItemMenu()
+        );
+        debugBox.setText("Step 2."); debugBox.exec();
+        item->setBrush(this->scene->getCurrentColor());
+        item->setPos(
+            (qreal)next.attribute("x").as_double(),
+            (qreal)next.attribute("y").as_double()
+        );
+        debugBox.setText("Step 3."); debugBox.exec();
+        this->scene->addItem(item);
+        debugBox.setText("Step 4."); debugBox.exec();
+
+        child = next.next_sibling(); i++;
+    }
+    // Loading data from nodes
+}
+//! [34]

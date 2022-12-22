@@ -36,6 +36,8 @@ public:
     void setTextColor(const QColor &color);
     void setItemColor(const QColor &color);
     void setFont(const QFont &font);
+    QMenu *getMyItemMenu();
+    QColor getCurrentColor();
 
 public slots:
     void setMode(Mode mode);
