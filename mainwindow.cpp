@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 #define DEBUG
-#undef DEBUG // Elemenating debug
+// #undef DEBUG // Elemenating debug
 
 #include "arrow.h"
 #include "diagramitem.h"
@@ -22,7 +22,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
-
+#include <string>
 
 const int InsertTextButton = 10;
 
@@ -294,24 +294,6 @@ void MainWindow::about()
                        tr("Использование <b>Диаграммы классов </b> для демонастрции  "
                           "возможности графического фреймворка."));
 }
-
-/*void MainWindow::save()
-{
-     //scene->addRect(QRectF(0, 0, 100, 200), QPen(Qt::black), QBrush(Qt::green));
-
-     QPixmap pixmap;
-     QPainter painter(&pixmap);
-     painter.setRenderHint(QPainter::Antialiasing);
-     scene->render(&painter);
-     painter.end();
-
-     pixmap.save("scene.png");
-     QImage img(1024,768,QImage::Format_ARGB32_Premultiplied);
-     QPainter p(&img);
-     scene->render(&p);
-     p.end();
-     img.save("XXX.png");
-}*/
 //! [20]
 
 //! [21]
@@ -701,7 +683,6 @@ void MainWindow::saveFile()
         DocumentNodeData cell;
         cell.x = item->x();
         cell.y = item->y();
-        cell.type = item->type();
         cell.acessibleName = item->data(ObjectName).toString().toLocal8Bit().data();
         DiagramItem* advancedItem = (DiagramItem*)item;
         cell.acessibleName = advancedItem->typeToString();
@@ -737,38 +718,71 @@ void MainWindow::loadFile()
     QString file_name = QFileDialog::getOpenFileName(this,
         tr("Open Scema"), QDir::homePath(), tr("XML file (*.xml *.uml*)"));
 
+#ifdef DEBUG
     if (file_name.isEmpty()) {
         QMessageBox debugBox;
         debugBox.setText("File is not selected!");
         debugBox.exec();
         return;
     }
-
     QMessageBox debugBox;
+#endif
+
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file(file_name.toLocal8Bit().data());
+    std::vector<DocumentNodeData> uml_data;
     for (pugi::xpath_node child = doc.select_node("diagram").node().select_node("diagram-item"); child;)
     {
         // Get next child node before possibly deleting current child
         pugi::xml_node next = child.node();
 
-        debugBox.setText("Step 1."); debugBox.exec();
-        DiagramItem* item = new DiagramItem(
-            (DiagramItem::DiagramType)next.attribute("type").as_int(),
-            this->scene->getMyItemMenu()
-        );
-        debugBox.setText("Step 2."); debugBox.exec();
-        item->setBrush(this->scene->getCurrentColor());
-        item->setPos(
-            (qreal)next.attribute("x").as_double(),
-            (qreal)next.attribute("y").as_double()
-        );
-        debugBox.setText("Step 3."); debugBox.exec();
-        this->scene->addItem(item);
-        debugBox.setText("Step 4."); debugBox.exec();
-
+        //! [34.1]
+        DocumentNodeData node;
+        node.x = next.attribute("x").as_float();
+        node.y = next.attribute("y").as_float();
+        node.acessibleName = (char*)(next.attribute("type").as_string());
+        uml_data.push_back(node);
+        //! [34.1]
+        
         child = next.next_sibling(); i++;
     }
+
     // Loading data from nodes
+    //! [34.2]
+    for (DocumentNodeData data : uml_data) {
+#ifdef DEBUG
+        QMessageBox debugBox;
+        debugBox.setText((
+            std::string("Provided item type: ")
+          + std::string(data.acessibleName)
+          + std::string("</br>Converted to: ")
+          + std::to_string(DiagramItem::stringToType(data.acessibleName))
+        ).c_str());
+        debugBox.exec();
+#endif
+
+        this->scene->setItemType(DiagramItem::DiagramType(
+            DiagramItem::stringToType(data.acessibleName)
+        ));
+        DiagramItem* item = new DiagramItem(
+                DiagramItem::DiagramType(DiagramItem::stringToType(data.acessibleName)),
+                this->scene->getMyItemMenu()
+            );
+        item->setPos(
+            (qreal)data.x,
+            (qreal)data.y
+        );
+        item->setBrush(this->scene->getCurrentColor());
+        this->scene->addItem(item);
+        //emit this->scene->itemInserted(item);
+        /*
+            item = new DiagramItem(myItemType, myItemMenu);
+            item->setBrush(myItemColor);
+            addItem(item);
+            item->setPos(mouseEvent->scenePos());
+            emit itemInserted(item);
+         */
+    }
+    //! [34.2]
 }
 //! [34]

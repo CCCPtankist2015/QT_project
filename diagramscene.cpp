@@ -251,6 +251,7 @@ bool DiagramScene::isItemChange(int type) const
     return std::find_if(items.begin(), items.end(), cb) != items.end();
 }
 //! [14]
+
 QMenu* DiagramScene::getMyItemMenu() {
     return this->myItemMenu;
 }

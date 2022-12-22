@@ -159,3 +159,19 @@ char* DiagramItem::typeToString() {
 }
 }
 //! [7]
+
+//! [8]
+int DiagramItem::stringToType(char* str)
+{
+    if (std::strcmp(str, "step") == 0)
+        return 0;
+    if (std::strcmp(str, "conditional") == 0)
+        return 1;
+    if (std::strcmp(str, "start-end") == 0)
+        return 3;
+    if (std::strcmp(str, "class") == 0)
+        return 4;
+    if (std::strcmp(str, "interface") == 0)
+        return 5;
+}
+//! [8]

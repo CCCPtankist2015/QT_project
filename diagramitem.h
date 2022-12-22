@@ -33,6 +33,7 @@ public:
     QPixmap image() const;
     int type() const override { return Type; }
     char* typeToString();
+    static int stringToType(char*);
 
 protected:
     void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override;
