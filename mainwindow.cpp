@@ -689,12 +689,22 @@ void MainWindow::saveFile()
     }
 
     // Getting data from scene
+    static const int ObjectName = 0;
     std::vector<DocumentNodeData> data_array;
-    for(auto item: this->scene->items()) {
+    for(auto item: this->scene->items()) { // Returns QGraphicsItem, maybe convert to basic instead?
+        if (item->x() == 0) {
+            continue;
+        }
         DocumentNodeData cell;
         cell.x = item->x();
         cell.y = item->y();
         cell.type = item->type();
+        cell.acessibleName = item->data(ObjectName).toString().toLocal8Bit().data();
+        if (cell.acessibleName == "") {
+            item->setData(ObjectName, "example-name-via-id-0");
+            cell.acessibleName = item->data(ObjectName).toString().toLocal8Bit().data();
+        }
+
         data_array.push_back(cell);
     }
 
@@ -703,6 +713,8 @@ void MainWindow::saveFile()
 
     pugi::xml_node diagram_node = doc.append_child("diagram");
     for(auto item : data_array) {
+        if (item.x == 0) // Arrow handler, skip
+            continue;
         pugi::xml_node item_node = diagram_node.append_child("diagram-item");
         std::vector<std::string> item_stringified = document_node_to_string(item);
         pugi::xml_attribute x_node = item_node.append_attribute("x");
@@ -711,6 +723,8 @@ void MainWindow::saveFile()
                             y_node.set_value(item_stringified.at(1).c_str());
         pugi::xml_attribute type_node = item_node.append_attribute("type");
                             type_node.set_value(item_stringified.at(2).c_str());
+        pugi::xml_attribute id_node = item_node.append_attribute("accessName");
+                            id_node.set_value(item_stringified.at(3).c_str());
     }
 
     doc.save_file(file_name.toLocal8Bit().data());

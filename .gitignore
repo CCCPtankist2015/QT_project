@@ -1,0 +1,6 @@
+build
+cmake-build-files
+*.xml
+*.uml
+*.pro
+*.pro.*

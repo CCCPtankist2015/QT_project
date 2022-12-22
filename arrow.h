@@ -23,7 +23,6 @@ public:
     void setColor(const QColor &color) { myColor = color; }
     DiagramItem *startItem() const { return myStartItem; }
     DiagramItem *endItem() const { return myEndItem; }
-
     void updatePosition();
 
 protected:
