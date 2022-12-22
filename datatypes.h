@@ -6,7 +6,6 @@
 struct DocumentNodeData {
     float x;
     float y;
-    int   type;
     char* acessibleName;
 };
 

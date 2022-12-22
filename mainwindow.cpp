@@ -722,7 +722,7 @@ void MainWindow::saveFile()
                             x_node.set_value(item_stringified.at(0).c_str());
         pugi::xml_attribute y_node = item_node.append_attribute("y");
                             y_node.set_value(item_stringified.at(1).c_str());
-        pugi::xml_attribute id_node = item_node.append_attribute("accessName");
+        pugi::xml_attribute id_node = item_node.append_attribute("type");
                             id_node.set_value(item_stringified.at(2).c_str());
     }
 
