@@ -5,11 +5,11 @@ HEADERS	    =   mainwindow.h \
                 datatypes.h \
                 diagramitem.h \
                 diagramscene.h \
-            arrow.h \
+                arrow.h \
                 pugixml.hpp \
                 pugiconfig.hpp \
                 globalconst.h \
-				diagramtextitem.h
+                diagramtextitem.h
 SOURCES	    =   mainwindow.cpp \
                 datatypes.cpp \
                 diagramitem.cpp \
@@ -18,7 +18,7 @@ SOURCES	    =   mainwindow.cpp \
                 pugixml.cpp \
                 diagramtextitem.cpp \
                 diagramscene.cpp
-RESOURCES   =	diagramscene.qrc
+RESOURCES   =   diagramscene.qrc
 
 
 # install

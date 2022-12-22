@@ -1,6 +1,9 @@
 // Copyright (C) 2016 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+#define DEBUG
+#undef DEBUG // Elemenating debug
+
 #include "diagramitem.h"
 #include "arrow.h"
 
@@ -8,6 +11,12 @@
 #include <QGraphicsSceneContextMenuEvent>
 #include <QMenu>
 #include <QPainter>
+
+#ifdef DEBUG
+#include <QMessageBox>
+
+#include <string>
+#endif
 
 //! [0]
 DiagramItem::DiagramItem(DiagramType diagramType, QMenu *contextMenu,
@@ -62,6 +71,14 @@ DiagramItem::DiagramItem(DiagramType diagramType, QMenu *contextMenu,
     setFlag(QGraphicsItem::ItemIsMovable, true);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
+#ifdef DEBUG
+    QMessageBox debugBox;
+    debugBox.setText(
+        this->typeToString()
+    );
+    debugBox.exec();
+    return;
+#endif
 }
 //! [0]
 
@@ -128,3 +145,17 @@ QVariant DiagramItem::itemChange(GraphicsItemChange change, const QVariant &valu
     return value;
 }
 //! [6]
+
+//! [7]
+char* DiagramItem::typeToString() {
+    // enum DiagramType { Step, Conditional, StartEnd, Io , Class, Interface};
+    switch(this->diagramType()) {
+    case 0: return "step";
+    case 1: return "conditional";
+    case 3: return "start-end";
+    case 4: return "class";
+    case 5: return "interface";
+    default: return (char*)(std::string("undefined ") + std::to_string(this->diagramType())).c_str();
+}
+}
+//! [7]

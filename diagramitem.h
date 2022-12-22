@@ -32,6 +32,7 @@ public:
     void addArrow(Arrow *arrow);
     QPixmap image() const;
     int type() const override { return Type; }
+    char* typeToString();
 
 protected:
     void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override;

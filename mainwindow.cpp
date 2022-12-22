@@ -1,6 +1,9 @@
 // Copyright (C) 2016 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+#define DEBUG
+#undef DEBUG // Elemenating debug
+
 #include "arrow.h"
 #include "diagramitem.h"
 #include "diagramscene.h"
@@ -700,10 +703,10 @@ void MainWindow::saveFile()
         cell.y = item->y();
         cell.type = item->type();
         cell.acessibleName = item->data(ObjectName).toString().toLocal8Bit().data();
-        if (cell.acessibleName == "") {
-            item->setData(ObjectName, "example-name-via-id-0");
-            cell.acessibleName = item->data(ObjectName).toString().toLocal8Bit().data();
-        }
+#ifdef DEBUG
+        DiagramItem* advancedItem = (DiagramItem*)item;
+        cell.acessibleName = advancedItem->typeToString();
+#endif//DEBUG
 
         data_array.push_back(cell);
     }
@@ -721,10 +724,8 @@ void MainWindow::saveFile()
                             x_node.set_value(item_stringified.at(0).c_str());
         pugi::xml_attribute y_node = item_node.append_attribute("y");
                             y_node.set_value(item_stringified.at(1).c_str());
-        pugi::xml_attribute type_node = item_node.append_attribute("type");
-                            type_node.set_value(item_stringified.at(2).c_str());
         pugi::xml_attribute id_node = item_node.append_attribute("accessName");
-                            id_node.set_value(item_stringified.at(3).c_str());
+                            id_node.set_value(item_stringified.at(2).c_str());
     }
 
     doc.save_file(file_name.toLocal8Bit().data());
